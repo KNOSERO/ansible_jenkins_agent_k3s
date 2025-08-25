@@ -7,10 +7,14 @@
     cmd: kubectl create serviceaccount jenkins-admin -n jenkins
 
 - name: Create clusterrolebinding for jenkins-admin
-  ansible.builtin.command:
-    cmd: kubectl create clusterrolebinding jenkins-admin-binding \
-      --clusterrole=cluster-admin \
-      --serviceaccount=jenkins:jenkins-admin
+  command:
+    argv:
+      - kubectl
+      - create
+      - clusterrolebinding
+      - jenkins-admin-binding
+      - --clusterrole=cluster-admin
+      - --serviceaccount=jenkins:jenkins-admin
 
 - name: Create token for jenkins-admin
   ansible.builtin.command:
