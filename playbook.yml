@@ -19,6 +19,7 @@
 - name: Create token for jenkins-admin
   ansible.builtin.command:
     cmd: kubectl create token jenkins-admin -n jenkins
+  register: jenkins_token
 
 - name: Show Jenkins token
   ansible.builtin.debug:
