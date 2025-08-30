@@ -1,31 +1,28 @@
 - name: Ensure jenkins namespace exists
-  command: >
-    kubectl create namespace jenkins
-    --dry-run=client -o yaml | kubectl apply -f -
+  shell: |
+    kubectl create namespace jenkins --dry-run=client -o yaml | kubectl apply -f -
 
 - name: Create jenkins-admin serviceaccount
-  command: >
-    kubectl create serviceaccount jenkins-admin -n jenkins
-    --dry-run=client -o yaml | kubectl apply -f -
+  shell: |
+    kubectl create serviceaccount jenkins-admin -n jenkins --dry-run=client -o yaml | kubectl apply -f -
 
 - name: Create clusterrolebinding for jenkins-admin
-  command: >
-    kubectl create clusterrolebinding jenkins-admin-binding
-    --clusterrole=cluster-admin
-    --serviceaccount=jenkins:jenkins-admin
-    --dry-run=client -o yaml | kubectl apply -f -
+  shell: |
+    kubectl create clusterrolebinding jenkins-admin-binding \
+      --clusterrole=cluster-admin \
+      --serviceaccount=jenkins:jenkins-admin \
+      --dry-run=client -o yaml | kubectl apply -f -
 
 - name: Create persistent token secret for jenkins-admin
-  command: >
-    kubectl create secret generic jenkins-admin-token
-    -n jenkins
-    --from-literal=none=none
-    --dry-run=client -o yaml | kubectl apply -f -
+  shell: |
+    kubectl create secret generic jenkins-admin-token \
+      -n jenkins \
+      --from-literal=none=none \
+      --dry-run=client -o yaml | kubectl apply -f -
 
 - name: Get Jenkins token from secret
-  shell: >
-    kubectl -n jenkins get secret jenkins-admin-token
-    -o jsonpath='{.data.token}' | base64 -d
+  shell: |
+    kubectl -n jenkins get secret jenkins-admin-token -o jsonpath='{.data.token}' | base64 -d
   register: jenkins_token
 
 - name: Show Jenkins token
