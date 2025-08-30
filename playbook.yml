@@ -1,26 +1,48 @@
-- name: Ensure namespace jenkins exists
-  ansible.builtin.command:
-    cmd: kubectl create namespace jenkins
+- name: Ensure jenkins namespace exists
+  kubernetes.core.k8s:
+    api_version: v1
+    kind: Namespace
+    name: jenkins
 
 - name: Create jenkins-admin serviceaccount
-  ansible.builtin.command:
-    cmd: kubectl create serviceaccount jenkins-admin -n jenkins
+  kubernetes.core.k8s:
+    api_version: v1
+    kind: ServiceAccount
+    name: jenkins-admin
+    namespace: jenkins
 
 - name: Create clusterrolebinding for jenkins-admin
-  command:
-    argv:
-      - kubectl
-      - create
-      - clusterrolebinding
-      - jenkins-admin-binding
-      - --clusterrole=cluster-admin
-      - --serviceaccount=jenkins:jenkins-admin
+  kubernetes.core.k8s:
+    api_version: rbac.authorization.k8s.io/v1
+    kind: ClusterRoleBinding
+    name: jenkins-admin-binding
+    role_ref:
+      kind: ClusterRole
+      name: cluster-admin
+      apiGroup: rbac.authorization.k8s.io
+    subjects:
+      - kind: ServiceAccount
+        name: jenkins-admin
+        namespace: jenkins
 
-- name: Create token for jenkins-admin
-  ansible.builtin.command:
-    cmd: kubectl create token jenkins-admin -n jenkins
+- name: Create persistent token secret for jenkins-admin
+  kubernetes.core.k8s:
+    definition:
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: jenkins-admin-token
+        namespace: jenkins
+        annotations:
+          kubernetes.io/service-account.name: "jenkins-admin"
+      type: kubernetes.io/service-account-token
+
+- name: Get Jenkins token from secret
+  command: >
+    kubectl -n jenkins get secret jenkins-admin-token
+    -o jsonpath='{.data.token}'
   register: jenkins_token
 
 - name: Show Jenkins token
-  ansible.builtin.debug:
-    msg: "Jenkins token is {{ jenkins_token.stdout }}"
+  debug:
+    msg: "Jenkins persistent token is {{ jenkins_token.stdout | b64decode }}"
