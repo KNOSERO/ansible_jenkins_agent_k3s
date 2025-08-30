@@ -15,10 +15,16 @@
 
 - name: Create persistent token secret for jenkins-admin
   shell: |
-    kubectl create secret generic jenkins-admin-token \
-      -n jenkins \
-      --from-literal=none=none \
-      --dry-run=client -o yaml | kubectl apply -f -
+    cat <<EOF | kubectl apply -f -
+    apiVersion: v1
+    kind: Secret
+    metadata:
+      name: jenkins-admin-token
+      namespace: jenkins
+      annotations:
+        kubernetes.io/service-account.name: "jenkins-admin"
+    type: kubernetes.io/service-account-token
+    EOF
 
 - name: Get Jenkins token from secret
   shell: |
